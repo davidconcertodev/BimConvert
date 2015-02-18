@@ -84,18 +84,18 @@ namespace BimConvert
             try
             {
                 openFileDialogSource.DefaultExt = ".ifc";
-                openFileDialogSource.Title = "Choose an IFC files";
+                openFileDialogSource.Title = "Choose IFC files";
                 openFileDialogSource.Multiselect = true;
                 openFileDialogSource.Filter = "IFC files (*.ifc)|*.ifc|All files (*.*)|*.*";
                 openFileDialogSource.FilterIndex = 1;
                 if (openFileDialogSource.ShowDialog() == DialogResult.OK)
-                {                    
+                {
                     textBoxDestination.Text = string.Empty;
                     sourcefiles = new string[openFileDialogSource.FileNames.Length];
                     if (openFileDialogSource.FileNames.Length > 0)
-                    {                        
+                    {
                         openFileDialogSource.FileNames.CopyTo(sourcefiles, 0);
-                        textBoxDestination.Text = Path.GetDirectoryName(openFileDialogSource.FileNames[0]);                        
+                        textBoxDestination.Text = Path.GetDirectoryName(openFileDialogSource.FileNames[0]);
                     }
                     AddListViewItems(sourcefiles);
                     if (sourcefiles.Length > 1)
@@ -123,7 +123,7 @@ namespace BimConvert
             listViewSourceFiles.Items.Clear();
             for (int i = 0; i < sourcefiles.Length;i++ )
             {
-                FileConvertItem k = new FileConvertItem { Name = Path.GetFileName(sourcefiles[i]), FullPathName = sourcefiles[i], Status = string.Empty };
+                FileConvertItem k = new FileConvertItem {Name = Path.GetFileName(sourcefiles[i]), FullPathName = sourcefiles[i], Status = string.Empty };
                 listViewSourceFiles.Items.Add(new FileConvertListViewItem(k));
             }
         }
@@ -197,7 +197,7 @@ namespace BimConvert
                 }
             }
             catch
-            { 
+            {
             }
         }
 
