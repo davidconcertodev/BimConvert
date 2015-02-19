@@ -101,6 +101,7 @@
             // 
             // buttonBrowseDestinationFolder
             // 
+            this.buttonBrowseDestinationFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonBrowseDestinationFolder.Location = new System.Drawing.Point(541, 57);
             this.buttonBrowseDestinationFolder.Name = "buttonBrowseDestinationFolder";
             this.buttonBrowseDestinationFolder.Size = new System.Drawing.Size(119, 31);

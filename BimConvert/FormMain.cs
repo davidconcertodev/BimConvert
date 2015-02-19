@@ -137,7 +137,7 @@ namespace BimConvert
                 {
                     for (int i = 0; i < listViewSourceFiles.Items.Count; i++)
                     {
-                        FileConvertListViewItem li = listViewSourceFiles.Items[0] as FileConvertListViewItem;
+                        FileConvertListViewItem li = listViewSourceFiles.Items[i] as FileConvertListViewItem;
                         if (li != null)
                         {
                             li.SubItems["status"].Text = "";
@@ -146,7 +146,7 @@ namespace BimConvert
                     this.Refresh();
                     for (int i = 0; i < listViewSourceFiles.Items.Count; i++)
                     {
-                        FileConvertListViewItem li = listViewSourceFiles.Items[0] as FileConvertListViewItem;
+                        FileConvertListViewItem li = listViewSourceFiles.Items[i] as FileConvertListViewItem;
                         if (li != null)
                         {
                             li.SubItems["status"].Text = "Converting...";
