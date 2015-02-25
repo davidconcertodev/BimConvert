@@ -77,10 +77,9 @@ namespace BimConvert
             }
         }
 
-        string[] sourcefiles;
-
         private void buttonBrowseSourceFiles_Click(object sender, EventArgs e)
         {
+            string[] sourcefiles;
             try
             {
                 openFileDialogSource.DefaultExt = ".ifc";
@@ -119,8 +118,7 @@ namespace BimConvert
         }
 
         private void AddListViewItems(string[] sourcefiles)
-        {
-            listViewSourceFiles.Items.Clear();
+        {            
             for (int i = 0; i < sourcefiles.Length;i++ )
             {
                 FileConvertItem k = new FileConvertItem {Name = Path.GetFileName(sourcefiles[i]), FullPathName = sourcefiles[i], Status = string.Empty };
@@ -133,7 +131,7 @@ namespace BimConvert
             try
             {
                 Cursor.Current = Cursors.WaitCursor;
-                if (sourcefiles != null)
+                if (listViewSourceFiles.Items.Count > 0)
                 {
                     for (int i = 0; i < listViewSourceFiles.Items.Count; i++)
                     {
@@ -216,7 +214,7 @@ namespace BimConvert
         {
             lv.View = View.Details;
             lv.Columns.Clear();
-            lv.Columns.Add("Name", 300);
+            lv.Columns.Add("Name", 500);
             lv.Columns.Add("Status", 80);
             lv.LabelEdit = false;
             //lv.ListViewItemSorter = new ListViewItemComparer(listViewSortingColumn);
@@ -224,6 +222,17 @@ namespace BimConvert
             lv.AllowDrop = false;
             lv.AllowColumnReorder = false;
             lv.LabelEdit = false;
+        }
+
+        private void buttonClear_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                listViewSourceFiles.Items.Clear();
+            }
+            catch
+            {
+            }
         }
     }
 }

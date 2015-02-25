@@ -38,6 +38,7 @@
             this.buttonBrowseDestinationFolder = new System.Windows.Forms.Button();
             this.folderBrowserDialogDestination = new System.Windows.Forms.FolderBrowserDialog();
             this.listViewSourceFiles = new System.Windows.Forms.ListView();
+            this.buttonClear = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // labelBrowseSource
@@ -122,11 +123,23 @@
             this.listViewSourceFiles.UseCompatibleStateImageBehavior = false;
             this.listViewSourceFiles.SelectedIndexChanged += new System.EventHandler(this.listViewSourceFiles_SelectedIndexChanged);
             // 
+            // buttonClear
+            // 
+            this.buttonClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonClear.Location = new System.Drawing.Point(541, 102);
+            this.buttonClear.Name = "buttonClear";
+            this.buttonClear.Size = new System.Drawing.Size(119, 30);
+            this.buttonClear.TabIndex = 9;
+            this.buttonClear.Text = "Clear";
+            this.buttonClear.UseVisualStyleBackColor = true;
+            this.buttonClear.Click += new System.EventHandler(this.buttonClear_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(673, 461);
+            this.Controls.Add(this.buttonClear);
             this.Controls.Add(this.listViewSourceFiles);
             this.Controls.Add(this.buttonBrowseDestinationFolder);
             this.Controls.Add(this.buttonConvert);
@@ -157,6 +170,7 @@
         private System.Windows.Forms.Button buttonBrowseDestinationFolder;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialogDestination;
         private System.Windows.Forms.ListView listViewSourceFiles;
+        private System.Windows.Forms.Button buttonClear;
     }
 }
 
