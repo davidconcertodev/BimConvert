@@ -164,11 +164,12 @@ namespace BimConvert
                                 {
                                     li.SubItems["status"].Text = ex.Message;
                                 }
+                                GC.Collect();
                                 if (ok)
                                 {
                                     li.SubItems["status"].Text = "Done";
                                 }
-                            }                            
+                            } 
                             this.Refresh();
                         }
                     }
