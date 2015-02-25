@@ -39,6 +39,7 @@
             this.folderBrowserDialogDestination = new System.Windows.Forms.FolderBrowserDialog();
             this.listViewSourceFiles = new System.Windows.Forms.ListView();
             this.buttonClear = new System.Windows.Forms.Button();
+            this.buttonCancel = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // labelBrowseSource
@@ -134,11 +135,22 @@
             this.buttonClear.UseVisualStyleBackColor = true;
             this.buttonClear.Click += new System.EventHandler(this.buttonClear_Click);
             // 
+            // buttonCancel
+            // 
+            this.buttonCancel.Location = new System.Drawing.Point(416, 101);
+            this.buttonCancel.Name = "buttonCancel";
+            this.buttonCancel.Size = new System.Drawing.Size(119, 31);
+            this.buttonCancel.TabIndex = 10;
+            this.buttonCancel.Text = "Cancel";
+            this.buttonCancel.UseVisualStyleBackColor = true;
+            this.buttonCancel.Click += new System.EventHandler(this.buttonCancel_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(673, 461);
+            this.Controls.Add(this.buttonCancel);
             this.Controls.Add(this.buttonClear);
             this.Controls.Add(this.listViewSourceFiles);
             this.Controls.Add(this.buttonBrowseDestinationFolder);
@@ -152,6 +164,7 @@
             this.Name = "FormMain";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Bim Convert";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_FormClosing);
             this.Load += new System.EventHandler(this.FormMain_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -171,6 +184,7 @@
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialogDestination;
         private System.Windows.Forms.ListView listViewSourceFiles;
         private System.Windows.Forms.Button buttonClear;
+        private System.Windows.Forms.Button buttonCancel;
     }
 }
 

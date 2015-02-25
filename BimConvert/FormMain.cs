@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -15,67 +16,17 @@ namespace BimConvert
 {
     public partial class FormMain : Form
     {
+        
         public FormMain()
         {
             InitializeComponent();
         }
 
-        void ConvertFile(string ifcFileFullName, string destinationFolder, string wexBimFileName, string xbimFile)
-        {
-            string workingDir = destinationFolder;
-            if (string.IsNullOrWhiteSpace(destinationFolder))
-            {
-                workingDir = Path.GetDirectoryName(ifcFileFullName);
-            }
-            else
-            {
-                workingDir = destinationFolder;
-            }
-            if (string.IsNullOrWhiteSpace(workingDir))
-            {
-                throw new ApplicationException("The destination folder not specified.");
-            }
-            if (!Path.IsPathRooted(workingDir))
-            {
-                throw new ApplicationException("The destination folder not rooted.");
-            }
-            if (!Directory.Exists(workingDir))
-            {
-                throw new ApplicationException("The destination folder not found.");
-            }
-            string fileName = Path.GetFileName(ifcFileFullName);
-            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
-            string coreDestinationFileName = Path.Combine(workingDir, fileNameWithoutExtension);
-            if (string.IsNullOrWhiteSpace(wexBimFileName))
-            {
-                wexBimFileName = Path.ChangeExtension(coreDestinationFileName, "wexbim");
-            }
-            else
-            {
-                wexBimFileName = Path.Combine(workingDir, Path.GetFileName(wexBimFileName));
-            }
-            if (string.IsNullOrWhiteSpace(xbimFile))
-            {
-                xbimFile = Path.ChangeExtension(coreDestinationFileName, "xbim");
-            }
-            else
-            {
-                xbimFile = Path.Combine(workingDir, Path.GetFileName(xbimFile));
-            }
-            using (FileStream wexBimFile = new FileStream(wexBimFileName, FileMode.Create))
-            {
-                using (BinaryWriter binaryWriter = new BinaryWriter(wexBimFile))
-                {
-                    using (XbimModel model = new XbimModel())
-                    {
-                        model.CreateFrom(ifcFileFullName, xbimFile, null, true, false);
-                        Xbim3DModelContext geomContext = new Xbim3DModelContext(model);
-                        geomContext.CreateContext(XbimGeometryType.PolyhedronBinary); // System.OutOfMemoryException Exception
-                        geomContext.Write(binaryWriter);
-                    }
-                }
-            }
-        }
+        ConvertWorkerThread convertWorker = null;
+        bool isClosing = false;
+        bool isFinished = false;
+        Guid workerId;
+        Semaphore sphFormAvailable = new Semaphore(1 , 1);
 
         private void buttonBrowseSourceFiles_Click(object sender, EventArgs e)
         {
@@ -131,46 +82,10 @@ namespace BimConvert
             try
             {
                 Cursor.Current = Cursors.WaitCursor;
-                if (listViewSourceFiles.Items.Count > 0)
+                if (!isClosing)
                 {
-                    for (int i = 0; i < listViewSourceFiles.Items.Count; i++)
-                    {
-                        FileConvertListViewItem li = listViewSourceFiles.Items[i] as FileConvertListViewItem;
-                        if (li != null)
-                        {
-                            li.SubItems["status"].Text = "";
-                        }
-                    }
-                    this.Refresh();
-                    for (int i = 0; i < listViewSourceFiles.Items.Count; i++)
-                    {
-                        FileConvertListViewItem li = listViewSourceFiles.Items[i] as FileConvertListViewItem;
-                        if (li != null)
-                        {
-                            li.SubItems["status"].Text = "Converting...";
-                            this.Refresh();
-                            FileConvertItem dataitem = li.Tag as FileConvertItem;
-                            if (dataitem != null)
-                            {
-                                bool ok = false;
-                                try
-                                {
-                                    ConvertFile(dataitem.FullPathName, textBoxDestination.Text, null, null);
-                                    ok = true;
-                                }
-                                catch (Exception ex)
-                                {
-                                    li.SubItems["status"].Text = ex.Message;
-                                }
-                                GC.Collect();
-                                if (ok)
-                                {
-                                    li.SubItems["status"].Text = "Done";
-                                }
-                            } 
-                            this.Refresh();
-                        }
-                    }
+                    //BlockingConvert();
+                    ThreadedConvert();
                 }
             }
             catch (Exception ex)
@@ -184,11 +99,156 @@ namespace BimConvert
             }
         }
 
-        private void buttonBrowseDestinationFolder_Click(object sender, EventArgs e)
+        void BlockingConvert()
+        {
+            Cursor.Current = Cursors.WaitCursor;
+            if (listViewSourceFiles.Items.Count > 0)
+            {
+                ClearListViewStatuses();
+                this.Refresh();
+                for (int i = 0; i < listViewSourceFiles.Items.Count; i++)
+                {
+                    FileConvertListViewItem li = listViewSourceFiles.Items[i] as FileConvertListViewItem;
+                    if (li != null)
+                    {
+                        li.SubItems["status"].Text = "Converting...";
+                        this.Refresh();
+                        FileConvertItem dataitem = li.Tag as FileConvertItem;
+                        if (dataitem != null)
+                        {
+                            bool ok = false;
+                            try
+                            {
+                                Util.ConvertFile(dataitem.FullPathName, textBoxDestination.Text, null, null);
+                                ok = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                li.SubItems["status"].Text = ex.Message;
+                            }
+                            GC.Collect();
+                            if (ok)
+                            {
+                                li.SubItems["status"].Text = "Done";
+                            }
+                        }
+                        this.Refresh();
+                    }
+                }
+            }
+        }
+
+        private void ClearListViewStatuses()
+        {
+            for (int i = 0; i < listViewSourceFiles.Items.Count; i++)
+            {
+                FileConvertListViewItem li = listViewSourceFiles.Items[i] as FileConvertListViewItem;
+                if (li != null)
+                {
+                    li.SubItems["status"].Text = "";
+                }
+            }
+        }
+
+        void ThreadedConvert()
         {
             try
             {
-                
+                SetBusy(true);
+                if (!isClosing && (convertWorker == null || !convertWorker.IsAlive))
+                {
+                    PrepareForWorker();
+                    ClearListViewStatuses();
+                    List<FileConvertItem> files = GetSourceFileListData();
+                    convertWorker = new ConvertWorkerThread(this, sphFormAvailable, files, textBoxDestination.Text);
+                    convertWorker.OnFinish += convertWorker_OnFinish;
+                    convertWorker.OnListItemUpdate += convertWorker_OnListItemUpdate;
+                    workerId = convertWorker.Id;
+                    convertWorker.Start();
+                }
+            }
+            catch
+            {
+                SetBusy(false);
+            }
+        }
+
+        void PrepareForWorker()
+        {
+            isFinished = false;
+            workerId = Guid.Empty;
+        }
+
+        void convertWorker_OnListItemUpdate(object sender, ListItemUpdateEventArgs e)
+        {
+            if (workerId != e.Id)
+                return;
+            if (e.Index < listViewSourceFiles.Items.Count)
+            {
+                FileConvertListViewItem li = listViewSourceFiles.Items[e.Index] as FileConvertListViewItem;
+                if (li != null)
+                {
+                    li.SubItems["status"].Text = e.Message ?? string.Empty;
+                    this.Refresh();
+                }
+            }
+        }
+
+        void convertWorker_OnFinish(object sender, WorkerEventArgs e)
+        {
+            if (workerId != e.Id)
+                return;
+            isFinished = true;
+            if (isClosing)
+            {
+                if (!this.IsDisposed)
+                {
+                    this.Close();
+                }
+            }
+            else
+            {
+                SetBusy(false);
+            }
+        }
+
+        bool isBusy = false;
+        void SetBusy(bool isBusy)
+        {
+            this.isBusy = isBusy;
+            buttonCancel.Enabled = isBusy;
+            buttonBrowseDestinationFolder.Enabled = !isBusy;
+            buttonBrowseSourceFiles.Enabled = !isBusy;
+            buttonClear.Enabled = !isBusy;
+            buttonConvert.Enabled = !isBusy;
+            if (!isBusy)
+            {
+                buttonCancel.Text = "Cancel";
+            }
+        }
+
+        List<FileConvertItem> GetSourceFileListData()
+        {
+            List<FileConvertItem> lst = new List<FileConvertItem>(listViewSourceFiles.Items.Count);
+            for (int i = 0; i < listViewSourceFiles.Items.Count; i++)
+            {
+                FileConvertListViewItem li = listViewSourceFiles.Items[i] as FileConvertListViewItem;
+                if (li != null)
+                {
+                    FileConvertItem dataitem = li.Tag as FileConvertItem;
+                    if (dataitem != null)
+                    {
+                        lst.Add(dataitem);
+                    }
+                }
+            }
+            return lst;
+        }
+    
+        private void buttonBrowseDestinationFolder_Click(object sender, EventArgs e)
+        {
+            try
+            {                
                 folderBrowserDialogDestination.Description = "Destination folder";
                 if (folderBrowserDialogDestination.ShowDialog() == DialogResult.OK)
                 {
@@ -208,6 +268,7 @@ namespace BimConvert
         private void FormMain_Load(object sender, EventArgs e)
         {
             InitListViewSourceFiles(listViewSourceFiles);
+            SetBusy(false);
         }
 
         private void InitListViewSourceFiles(ListView lv)
@@ -229,6 +290,53 @@ namespace BimConvert
             try
             {
                 listViewSourceFiles.Items.Clear();
+            }
+            catch
+            {
+            }
+        }
+
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            try
+            {
+                isClosing = true;
+                if (convertWorker != null)
+                {
+                    if (convertWorker.IsAlive)
+                    {
+                        convertWorker.Quit();
+                        if (!isFinished)
+                        {
+                            buttonCancel.Enabled = false;
+                            buttonCancel.Text = "Quitting...";
+                            e.Cancel = true;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+        }
+
+        private void buttonCancel_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (convertWorker != null)
+                {
+                    if (convertWorker.IsAlive)
+                    {
+                        convertWorker.Quit();
+                        if (!isFinished)
+                        {
+                            buttonCancel.Enabled = false;
+                            buttonCancel.Text = "Quitting...";
+                        }
+                    }
+                }
             }
             catch
             {
