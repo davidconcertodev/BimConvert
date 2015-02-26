@@ -199,17 +199,9 @@ namespace BimConvert
             if (workerId != e.Id)
                 return;
             isFinished = true;
-            if (isClosing)
-            {
-                if (!this.IsDisposed)
-                {
-                    this.Close();
-                }
-            }
-            else
-            {
-                SetBusy(false);
-            }
+            SetBusy(false);
+            isClosing = false;
+            buttonCancel.Text = "Cancel";
         }
 
         bool isBusy = false;
@@ -221,10 +213,6 @@ namespace BimConvert
             buttonBrowseSourceFiles.Enabled = !isBusy;
             buttonClear.Enabled = !isBusy;
             buttonConvert.Enabled = !isBusy;
-            if (!isBusy)
-            {
-                buttonCancel.Text = "Cancel";
-            }
         }
 
         List<FileConvertItem> GetSourceFileListData()
