@@ -84,7 +84,6 @@ namespace BimConvert
                 Cursor.Current = Cursors.WaitCursor;
                 if (!isClosing)
                 {
-                    //BlockingConvert();
                     ThreadedConvert();
                 }
             }
@@ -96,45 +95,6 @@ namespace BimConvert
             finally
             {
                 Cursor.Current = Cursors.Default;
-            }
-        }
-
-        void BlockingConvert()
-        {
-            Cursor.Current = Cursors.WaitCursor;
-            if (listViewSourceFiles.Items.Count > 0)
-            {
-                ClearListViewStatuses();
-                this.Refresh();
-                for (int i = 0; i < listViewSourceFiles.Items.Count; i++)
-                {
-                    FileConvertListViewItem li = listViewSourceFiles.Items[i] as FileConvertListViewItem;
-                    if (li != null)
-                    {
-                        li.SubItems["status"].Text = "Converting...";
-                        this.Refresh();
-                        FileConvertItem dataitem = li.Tag as FileConvertItem;
-                        if (dataitem != null)
-                        {
-                            bool ok = false;
-                            try
-                            {
-                                Util.ConvertFile(dataitem.FullPathName, textBoxDestination.Text, null, null);
-                                ok = true;
-                            }
-                            catch (Exception ex)
-                            {
-                                li.SubItems["status"].Text = ex.Message;
-                            }
-                            GC.Collect();
-                            if (ok)
-                            {
-                                li.SubItems["status"].Text = "Done";
-                            }
-                        }
-                        this.Refresh();
-                    }
-                }
             }
         }
 
